@@ -1,5 +1,5 @@
 import {useNavigation} from "@react-navigation/native";
-import React, {useLayoutEffect} from "react";
+import React, {useEffect, useLayoutEffect, useState} from "react";
 import {Image, ScrollView, Text, TextInput, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {
@@ -12,13 +12,30 @@ import {
 import Categories from "../components/Categories";
 import FeaturedRow from "../components/FeaturedRow";
 
+import sanityClient from "../sanity";
+
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const [featuredCategories, setFeaturedCategories] = useState([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
+  }, []);
+
+  useEffect(() => {
+    sanityClient
+      .fetch(
+        `*[_type == "featured"] {
+          _id,
+          name,
+          short_description
+        }`
+      )
+      .then((data) => {
+        setFeaturedCategories(data);
+      });
   }, []);
 
   return (
@@ -54,21 +71,14 @@ const HomeScreen = () => {
       >
         <Categories />
 
-        <FeaturedRow
-          title="Featured"
-          description="simply dummy text of the printing and typesetting industry"
-          id="1"
-        />
-        <FeaturedRow
-          title="Featured"
-          description="simply dummy text of the printing and typesetting industry"
-          id="2"
-        />
-        <FeaturedRow
-          title="Featured"
-          description="simply dummy text of the printing and typesetting industry"
-          id="3"
-        />
+        {featuredCategories?.map((category, index) => (
+          <FeaturedRow
+            key={index}
+            id={category._id}
+            title={category.name}
+            description={category.short_description}
+          />
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
